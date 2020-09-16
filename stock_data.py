@@ -21,20 +21,21 @@ class StockData:
     def updatingStockData(self):
         if path.exists('concat.csv'):
             dataFile = pd.read_csv('concat.csv')
-            bottom_row = dataFile.tail(1)
-            last_date = bottom_row.iloc[0]['Datetime']
+            last_date = dataFile.iloc[-1][0]
             last_date = last_date[0:10]
-            last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d')
+            start_date = (datetime.datetime.strptime(last_date, '%Y-%m-%d').date() + datetime.timedelta(1)).strftime('%Y-%m-%d')
+            # daysDifference = (datetime.date.today() - last_date).days
+            
             print(last_date)
             print(datetime.date.today())
-            print((datetime.date.today()-last_date).days)
-            # updatedData = yf.download(  self.ticker,
-            #                             start=last_date,
-            #                             end=self.date,
-            #                             interval=self.interval,
-            #                             progress=False
-            # )
-        
+            # print(daysDifference)
+            updatedData = yf.download(  self.ticker,
+                                        start=start_date,
+                                        end=datetime.date.today().strftime('%Y-%m-%d'),
+                                        interval=self.interval,
+                                        progress=False
+            )
+            print(updatedData)
     
     def savingStockData(self):
         if path.exists('concat.csv'):
