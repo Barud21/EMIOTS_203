@@ -5,4 +5,4 @@ install:
   - pip install -r requirements.txt
   - python -m pip install --upgrade pip
 script:
-  - python EMIOTS-203/EMIOTS-203/manage.py test
+  - python /EMIOTS-203/manage.py test
