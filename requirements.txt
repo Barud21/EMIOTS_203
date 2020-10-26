@@ -16,6 +16,7 @@ click-repl==0.1.6         # via celery
 click==7.1.2              # via celery, click-didyoumean, click-repl
 dj-database-url==0.5.0    # via django-heroku
 django-celery-beat==2.0.0  # via -r requirements.in
+django-environ==0.4.5     # via -r requirements.in
 django-heroku==0.3.1      # via -r requirements.in
 django-timezone-field==4.0  # via django-celery-beat
 django==3.1.2             # via -r requirements.in, django-celery-beat, django-heroku, django-timezone-field
