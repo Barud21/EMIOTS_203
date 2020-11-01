@@ -6,3 +6,4 @@ install:
   - python -m pip install --upgrade pip
 script:
   - python manage.py test
+  - flake8 . --exit-zero
