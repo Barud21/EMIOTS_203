@@ -1,12 +1,8 @@
-import csv
+import datetime
+from os import path
+
 import pandas as pd
 import yfinance as yf
-from yahoofinancials import YahooFinancials
-import datetime
-import os.path
-from os import path
-import dateutil
-import pytz
 
 
 class StockData:
@@ -21,14 +17,17 @@ class StockData:
         self.historic = pd.DataFrame()
         self.tweets = pd.DataFrame()
         self.tweetsDates = pd.DataFrame()
-    
+
     def updatingStockData(self):
         if path.exists('stock_data.csv'):
-            self.data = pd.read_csv('stock_data.csv', index_col=0)    # index_col = 0 guarantees, that the index column is filled with datetime, pandas read_csv always adds index column (0, 1, ...)
+            self.data = pd.read_csv('stock_data.csv', index_col=0)      # index_col = 0 guarantees, that the index
+            # column is filled with datetime, pandas read_csv always adds index column (0, 1, ...)
             last_date = self.data.index[-1]                     # accessing the last index value
             last_date = last_date[0:10]                         # taking only date form datetime index
-            start_date = (datetime.datetime.strptime(last_date, '%Y-%m-%d').date() + datetime.timedelta(2)).strftime('%Y-%m-%d')    # defining the start date for our request
-            daysDifference = (datetime.date.today() - datetime.datetime.strptime(last_date, '%Y-%m-%d').date()).days    # calculating the days difference between today and last date in file
+            start_date = (datetime.datetime.strptime(last_date, '%Y-%m-%d').date() +
+                          datetime.timedelta(2)).strftime('%Y-%m-%d')    # defining the start date for our request
+            daysDifference = (datetime.date.today() - datetime.datetime.strptime(last_date, '%Y-%m-%d').date()).days
+            # calculating the days difference between today and last date in file
 
             print(daysDifference)
             print(last_date)
@@ -38,12 +37,11 @@ class StockData:
                 print("Data is up to date")
 
             elif 1 < daysDifference < 60:
-                last60Days = yf.download(  self.ticker,
-                                            start=start_date,
-                                            end=datetime.date.today().strftime('%Y-%m-%d'),
-                                            interval=self.interval,
-                                            progress=False
-                )
+                last60Days = yf.download(self.ticker,
+                                         start=start_date,
+                                         end=datetime.date.today().strftime('%Y-%m-%d'),
+                                         interval=self.interval,
+                                         progress=False)
 
                 print(self.data)
                 print(last60Days)
@@ -55,42 +53,38 @@ class StockData:
             elif daysDifference > 59:
                 daysDifference = daysDifference-61
                 daysDifference = int(daysDifference)
-                historicEndDate = (datetime.datetime.strptime(start_date, '%Y-%m-%d').date() + datetime.timedelta(daysDifference)).strftime('%Y-%m-%d')
+                historicEndDate = (datetime.datetime.strptime(start_date, '%Y-%m-%d').date() +
+                                   datetime.timedelta(daysDifference)).strftime('%Y-%m-%d')
 
-                historicData = yf.download( self.ticker,
-                                            start=start_date,
-                                            end=historicEndDate,
-                                            interval='1d',
-                                            progress=False
-                )
-                
-                last60Days = yf.download(  self.ticker,
-                                            start = (datetime.date.today() + datetime.timedelta(-59)).strftime('%Y-%m-%d'),
-                                            end=datetime.date.today(),
-                                            interval='5m',
-                                            progress=False
-                )
+                historicData = yf.download(self.ticker,
+                                           start=start_date,
+                                           end=historicEndDate,
+                                           interval='1d',
+                                           progress=False)
+
+                last60Days = yf.download(self.ticker,
+                                         start=(datetime.date.today() + datetime.timedelta(-59)).strftime('%Y-%m-%d'),
+                                         end=datetime.date.today(),
+                                         interval='5m',
+                                         progress=False)
 
                 concatData = pd.concat([self.data, historicData])
                 concatData = pd.concat([concatData, last60Days])
                 concatData.to_csv('stock_data.csv')
 
-    
     def downloadingDataFirstTime(self):
-        if path.isfile('stock_data.csv') == False:
-            historicData = yf.download( self.ticker,
-                                        start='2017-01-01',
-                                        end=(datetime.date.today() + datetime.timedelta(-59)).strftime('%Y-%m-%d'),
-                                        interval='1d',
-                                        progress=False
-            )
+        if path.isfile('stock_data.csv') is False:
+            historicData = yf.download(self.ticker,
+                                       start='2017-01-01',
+                                       end=(datetime.date.today() + datetime.timedelta(-59)).strftime('%Y-%m-%d'),
+                                       interval='1d',
+                                       progress=False)
 
-            last60Days = yf.download(   self.ticker,
-                                        start=(datetime.date.today() + datetime.timedelta(-59)).strftime('%Y-%m-%d'),
-                                        end=datetime.date.today().strftime('%Y-%m-%d'),
-                                        interval='5m',
-                                        progress=False
-            )
+            last60Days = yf.download(self.ticker,
+                                     start=(datetime.date.today() + datetime.timedelta(-59)).strftime('%Y-%m-%d'),
+                                     end=datetime.date.today().strftime('%Y-%m-%d'),
+                                     interval='5m',
+                                     progress=False)
 
             concatData = pd.concat([historicData, last60Days])
             concatData.to_csv('stock_data.csv')
@@ -101,7 +95,7 @@ class StockData:
     def extractingTweetsDates(self):
         self.tweets = pd.read_csv('elonmusk_Tweets.csv', index_col=0)
         print(self.tweets)
-        
+
         self.tweetsDates = self.tweets.iloc[:, 0:1]
         print(self.tweetsDates)
 
@@ -110,8 +104,8 @@ class StockData:
 
         print(self.tweetsDates.iloc[0, 0])
 
-        idx = [str(self.data.index[self.data.index.get_loc(key=self.tweetsDates.iloc[x, 0], method='nearest')]) for x in range(self.tweetsDates.size)]    
-        
+        idx = [str(self.data.index[self.data.index.get_loc(key=self.tweetsDates.iloc[x, 0], method='nearest')])
+               for x in range(self.tweetsDates.size)]
         print(idx)
 
 
