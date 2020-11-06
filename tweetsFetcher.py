@@ -13,14 +13,21 @@ from project.settings import (TWEETSFETCHER_CUSTOMERKEY,
 
 
 class TweetsFetcher:
-    def __init__(self):
+    def __init__(self, username, companyOfInterest):
         self.customer_key = TWEETSFETCHER_CUSTOMERKEY
         self.customer_secret = TWEETSFETCHER_CUSTOMERSECRET
         self.access_token = TWEETSFETCHER_ACCESSTOKEN
         self.access_token_secret = TWEETSFETCHER_ACCESSTOKENSECRET
-        self.userId = 'elonmusk'    # TODO: Move to constructor params maybe?
-        self.companyOfInterest = 'Tesla'
-        self.dataFileName = self.userId + '_Tweets.csv'     # TODO: Put this file in data dir
+
+        self.userId = username
+        self.companyOfInterest = companyOfInterest
+
+        self.dataFileName = self.userId + '_Tweets.csv'
+        self.dataDirName = 'data'
+        self.dataFileLocation = os.path.join(self.dataDirName, self.dataFileName)
+        if not os.path.isdir(self.dataDirName):
+            os.mkdir(self.dataDirName)
+
         self.api = self._authorizeMe()
 
     def _authorizeMe(self):
@@ -64,7 +71,7 @@ class TweetsFetcher:
             return False
 
     def _writeToFileOnlyNeededTweets(self, listOfTweets, writeHeaders=False):
-        with open(self.dataFileName, 'a', newline='', encoding='utf-8') as dataFile:
+        with open(self.dataFileLocation, 'a', newline='', encoding='utf-8') as dataFile:
             writer = csv.writer(dataFile)
             if writeHeaders:
                 headers = ['Id',
@@ -110,7 +117,7 @@ class TweetsFetcher:
     def updateDataFileToThisMoment(self):
         # 1. Grab the last tweet Id that is present in the file
         # If it is too slow, rewrite this part so we dont need to load entire file in memory
-        with open(self.dataFileName, 'r', encoding='utf-8') as dataFile:
+        with open(self.dataFileLocation, 'r', encoding='utf-8') as dataFile:
             lines = dataFile.readlines()
         lastLine = lines[-1]
         biggestIdInFile = int((lastLine.split(','))[0])
@@ -161,8 +168,9 @@ class TweetsFetcher:
 
     def _AddHtmlFieldToDataFile(self):
         tempDataFileName = 'tempDataFile.csv'
-        with open(self.dataFileName, 'r', encoding='utf-8') as dataFile:
-            with open(tempDataFileName, 'w', encoding='utf-8') as NewTempDataFile:
+        tempDataFileLocation = os.path.join(self.dataDirName, tempDataFileName)
+        with open(self.dataFileLocation, 'r', encoding='utf-8') as dataFile:
+            with open(tempDataFileLocation, 'w', encoding='utf-8') as NewTempDataFile:
                 writer = csv.writer(NewTempDataFile, lineterminator='\n')
                 reader = csv.reader(dataFile)
 
@@ -182,18 +190,18 @@ class TweetsFetcher:
 
                 writer.writerows(all)
 
-        os.remove(self.dataFileName)
-        os.rename(tempDataFileName, self.dataFileName)
+        os.remove(self.dataFileLocation)
+        os.rename(tempDataFileLocation, self.dataFileLocation)
 
     def createOrUpdateDataFile(self):
-        if os.path.isfile(self.dataFileName):
+        if os.path.isfile(self.dataFileLocation):
             self.updateDataFileToThisMoment()
         else:
             self.createDataFile()
 
 
 if __name__ == '__main__':
-    fetcher = TweetsFetcher()
+    fetcher = TweetsFetcher('elonmusk', 'Tesla')
     fetcher.createOrUpdateDataFile()
 
 # Note: To render HTML Elem correctly, replace "" with "
