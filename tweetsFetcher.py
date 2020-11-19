@@ -201,7 +201,7 @@ class TweetsFetcher:
 
 
 if __name__ == '__main__':
-    fetcher = TweetsFetcher('elonmusk', 'Tesla')
+    fetcher = TweetsFetcher(username='elonmusk', companyOfInterest='Tesla')
     fetcher.createOrUpdateDataFile()
 
 # Note: To render HTML Elem correctly, replace "" with "
