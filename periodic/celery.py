@@ -7,8 +7,12 @@ app = Celery('periodic',
 app.config_from_object('periodic.celeryconfig')
 
 app.conf.beat_schedule = {
- 'runme': {
+ 'testTask': {
     'task': 'periodic.tasks.check',
-    'schedule': crontab(minute='*/2')
+    'schedule': crontab(minute='*/5')
+    },
+ 'realTask': {
+    'task': 'periodic.tasks.createOrUpdateTweetsDataFile',
+    'schedule': crontab(hour=21, minute=30)
     }
 }
