@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'EMIOTS203.apps.Emiots203Config',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
