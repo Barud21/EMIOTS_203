@@ -3,6 +3,7 @@ from os import path
 
 import pandas as pd
 import yfinance as yf
+import matplotlib.pyplot as plt
 
 
 class StockData:
@@ -19,8 +20,8 @@ class StockData:
         self.tweetsDates = pd.DataFrame()
 
     def updatingStockData(self):
-        if path.exists('stock_data.csv'):
-            self.data = pd.read_csv('stock_data.csv', index_col=0)      # index_col = 0 guarantees, that the index
+        if path.exists('data/stock_data.csv'):
+            self.data = pd.read_csv('data/stock_data.csv', index_col=0)      # index_col = 0 guarantees, that the index
             # column is filled with datetime, pandas read_csv always adds index column (0, 1, ...)
             last_date = self.data.index[-1]                     # accessing the last index value
             last_date = last_date[0:10]                         # taking only date form datetime index
@@ -47,7 +48,7 @@ class StockData:
                 print(last60Days)
 
                 concatData = pd.concat([self.data, last60Days])
-                concatData.to_csv('stock_data.csv')
+                concatData.to_csv('data/stock_data.csv')
                 print(concatData)
 
             elif daysDifference > 59:
@@ -70,10 +71,10 @@ class StockData:
 
                 concatData = pd.concat([self.data, historicData])
                 concatData = pd.concat([concatData, last60Days])
-                concatData.to_csv('stock_data.csv')
+                concatData.to_csv('data/stock_data.csv')
 
     def downloadingDataFirstTime(self):
-        if path.isfile('stock_data.csv') is False:
+        if path.isfile('data/stock_data.csv') is False:
             historicData = yf.download(self.ticker,
                                        start='2017-01-01',
                                        end=(datetime.date.today() + datetime.timedelta(-59)).strftime('%Y-%m-%d'),
@@ -87,26 +88,62 @@ class StockData:
                                      progress=False)
 
             concatData = pd.concat([historicData, last60Days])
-            concatData.to_csv('stock_data.csv')
+            concatData.to_csv('data/stock_data.csv')
             # print(historicData)
             # print(last60Days)
             # print(concatData)
 
     def extractingTweetsDates(self):
-        self.tweets = pd.read_csv('elonmusk_Tweets.csv', index_col=0)
-        print(self.tweets)
+        self.tweets = pd.read_csv('data/elonmusk_Tweets.csv', index_col=0)
+        # print(self.tweets)
 
         self.tweetsDates = self.tweets.iloc[:, 0:1]
-        print(self.tweetsDates)
+        # print(self.tweetsDates)
 
         self.data.index = pd.to_datetime(self.data.index, format='%Y-%m-%d %H:%M:%S', utc='US/Eastern')
-        print(self.data.index)
+        # print(self.data.index)
 
-        print(self.tweetsDates.iloc[0, 0])
+        # print(self.tweetsDates.iloc[0, 0])
+        print('***************')
 
-        idx = [str(self.data.index[self.data.index.get_loc(key=self.tweetsDates.iloc[x, 0], method='nearest')])
-               for x in range(self.tweetsDates.size)]
-        print(idx)
+        for x in range(-3, -1):   # self.tweets.shape[0]
+            # print(self.tweets.iloc[x, 0])
+            idx = self.data.index.get_loc(key=self.tweetsDates.iloc[x, 0], method='pad')
+            firstHour = self.data.iloc[idx:idx+13]
+            firstHourHighestPeak = firstHour["High"].max()
+            firstHourLowestPeak = firstHour["Low"].min()
+            openingValue = firstHour["Open"][0]
+
+            swingInPlus = (firstHourHighestPeak - openingValue)/openingValue*100
+            swingInMinus = (firstHourLowestPeak - openingValue)/openingValue*100
+
+            sixHoursSpan = self.data.iloc[idx-36: idx+37]
+            sixHoursSpan.index = sixHoursSpan.index.format(formatter=lambda x: x.strftime('%H:%M'))
+            # fig, ax = plt.subplots()
+            # ax = sixHoursSpan.index
+            plt.close('all')
+            # sixHoursSpan = sixHoursSpan.cumsum()
+            sixHoursSpan.plot(y="Open")
+            # fig.savefig('plot.png')
+
+            # print(sixHoursSpan.plot())
+
+            print(idx)
+            print(openingValue)
+            # print(oneHourLater)
+            print(firstHour)
+            print("")
+            print(firstHourHighestPeak)
+            print("")
+            print(firstHourLowestPeak)
+            print("")
+            print(swingInPlus)
+            print("")
+            print(swingInMinus)
+            print("")
+            print(sixHoursSpan)
+            print("")
+            plt.show()
 
 
 if __name__ == '__main__':
