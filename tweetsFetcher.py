@@ -43,22 +43,25 @@ class TweetsFetcher:
                                              tweet_mode='extended',
                                              count=TweetsPerRequestMax
                                              )
-        allTweets.extend(tweetsBatch)
-        oldestId = tweetsBatch[-1].id
+        if len(tweetsBatch) > 0:
+            allTweets.extend(tweetsBatch)
+            oldestId = tweetsBatch[-1].id
 
-        while True:
-            tweetsBatch = self.api.user_timeline(screen_name=self.userId,
-                                                 tweet_mode='extended',
-                                                 count=TweetsPerRequestMax,
-                                                 max_id=oldestId - 1
-                                                 )
-            if len(tweetsBatch) > 0:
-                allTweets.extend(tweetsBatch)
-                oldestId = tweetsBatch[-1].id
-                print('Len of allTweets is: ', len(allTweets))
-                print('Last date is: ', tweetsBatch[-1].created_at)
-            else:
-                break
+            while True:
+                tweetsBatch = self.api.user_timeline(screen_name=self.userId,
+                                                     tweet_mode='extended',
+                                                     count=TweetsPerRequestMax,
+                                                     max_id=oldestId - 1
+                                                     )
+                if len(tweetsBatch) > 0:
+                    allTweets.extend(tweetsBatch)
+                    oldestId = tweetsBatch[-1].id
+                    print(f"Still fetching tweets, got {len(allTweets)} tweets so far from Twitter API.")
+                    print('The oldest tweet has the following date ', tweetsBatch[-1].created_at)
+                else:
+                    break
+        else:
+            print('There was no tweets to fetch.')
 
         return allTweets
 
@@ -84,6 +87,8 @@ class TweetsFetcher:
                            'MentionedUsers',
                            'HtmlElement']
                 writer.writerow(headers)
+
+            howManySavedTweets = 0
             # we expect that listofTweets has the newest tweets in the begining of the list
             for tweet in reversed(listOfTweets):
                 # If tweet contains needed data then save it to file
@@ -107,6 +112,9 @@ class TweetsFetcher:
                                     isReply,
                                     mentionedUsers,
                                     htmlElem])
+                    howManySavedTweets += 1
+
+            print(f"Saved {howManySavedTweets} tweets that matched criteria.")
 
     def createDataFile(self):
         # Fetch tweets from TweeterApi
@@ -121,7 +129,6 @@ class TweetsFetcher:
             lines = dataFile.readlines()
         lastLine = lines[-1]
         biggestIdInFile = int((lastLine.split(','))[0])
-        print(biggestIdInFile)
         # 2. Check if there are any newer tweets than the last tweet in file
         allTweets = []
 
@@ -146,21 +153,22 @@ class TweetsFetcher:
                 if len(tweetsBatch) > 0:
                     allTweets.extend(tweetsBatch)
                     oldestId = tweetsBatch[-1].id
-                    print('Len of allTweets is: ', len(allTweets))
-                    print('Last date is: ', tweetsBatch[-1].created_at)
+                    print(f"Still fetching tweets, got {len(allTweets)} tweets so far from Twitter API.")
                 else:
                     break
 
             # 3. Save results to file
             # Write a function to save only needed tweets to file. SaveHeaders=false as a param
+            print(f"Fetched {len(allTweets)} tweets in total from Twitter API.")
             self._writeToFileOnlyNeededTweets(allTweets)
+        else:
+            print('There was no tweets to fetch.')
 
     def getHtmlForTweet(self, TweetId):
         url = 'https://api.twitter.com/1.1/statuses/oembed.json'    # needs no auth
         payload = {'id': str(TweetId), 'theme': 'dark', 'omit_script': '1'}
         r = requests.get(url, params=payload)
         htmlForTweet = r.json()['html'].strip()
-        # print('Response is: ', htmlForTweet)
         return htmlForTweet
 
     # needed only to migrate from data file that didnt have the HtmlElem before
