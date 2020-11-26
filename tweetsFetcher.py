@@ -74,6 +74,8 @@ class TweetsFetcher:
             return False
 
     def _writeToFileOnlyNeededTweets(self, listOfTweets, writeHeaders=False):
+        listOfNewTweetsBasicData = []
+
         with open(self.dataFileLocation, 'a', newline='', encoding='utf-8') as dataFile:
             writer = csv.writer(dataFile)
             if writeHeaders:
@@ -88,7 +90,6 @@ class TweetsFetcher:
                            'HtmlElement']
                 writer.writerow(headers)
 
-            howManySavedTweets = 0
             # we expect that listofTweets has the newest tweets in the begining of the list
             for tweet in reversed(listOfTweets):
                 # If tweet contains needed data then save it to file
@@ -112,17 +113,27 @@ class TweetsFetcher:
                                     isReply,
                                     mentionedUsers,
                                     htmlElem])
-                    howManySavedTweets += 1
 
-            print(f"Saved {howManySavedTweets} tweets that matched criteria.")
+                    newTweetBasicData = {
+                        'publish_date': tweet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                        'tweet_html': htmlElem
+                    }
+
+                    listOfNewTweetsBasicData.append(newTweetBasicData)
+
+        print(f"Saved {len(listOfNewTweetsBasicData)} tweets that matched criteria.")
+        return listOfNewTweetsBasicData
 
     def createDataFile(self):
         # Fetch tweets from TweeterApi
         allTweets = self._getAllTweetsThatArePossibleToFetch()
 
-        self._writeToFileOnlyNeededTweets(allTweets, writeHeaders=True)
+        listOfNewTweetsBasicData = self._writeToFileOnlyNeededTweets(allTweets, writeHeaders=True)
+
+        return listOfNewTweetsBasicData
 
     def updateDataFileToThisMoment(self):
+        listOfNewTweetsBasicData = []
         # 1. Grab the last tweet Id that is present in the file
         # If it is too slow, rewrite this part so we dont need to load entire file in memory
         with open(self.dataFileLocation, 'r', encoding='utf-8') as dataFile:
@@ -160,15 +171,19 @@ class TweetsFetcher:
             # 3. Save results to file
             # Write a function to save only needed tweets to file. SaveHeaders=false as a param
             print(f"Fetched {len(allTweets)} tweets in total from Twitter API.")
-            self._writeToFileOnlyNeededTweets(allTweets)
+            listOfNewTweetsBasicData = self._writeToFileOnlyNeededTweets(allTweets)
         else:
             print('There was no tweets to fetch.')
+
+        return listOfNewTweetsBasicData
 
     def getHtmlForTweet(self, TweetId):
         url = 'https://api.twitter.com/1.1/statuses/oembed.json'    # needs no auth
         payload = {'id': str(TweetId), 'theme': 'dark', 'omit_script': '1'}
         r = requests.get(url, params=payload)
+
         htmlForTweet = r.json()['html'].strip()
+
         return htmlForTweet
 
     # needed only to migrate from data file that didnt have the HtmlElem before
@@ -202,14 +217,18 @@ class TweetsFetcher:
         os.rename(tempDataFileLocation, self.dataFileLocation)
 
     def createOrUpdateDataFile(self):
+        listOfNewTweetsBasicData = []
+
         if os.path.isfile(self.dataFileLocation):
-            self.updateDataFileToThisMoment()
+            listOfNewTweetsBasicData = self.updateDataFileToThisMoment()
         else:
-            self.createDataFile()
+            listOfNewTweetsBasicData = self.createDataFile()
+
+        return listOfNewTweetsBasicData
 
 
 if __name__ == '__main__':
     fetcher = TweetsFetcher(username='elonmusk', companyOfInterest='Tesla')
-    fetcher.createOrUpdateDataFile()
+    listOfNewTweetsBasicData = fetcher.createOrUpdateDataFile()
 
 # Note: To render HTML Elem correctly, replace "" with "
