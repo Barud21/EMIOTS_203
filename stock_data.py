@@ -119,18 +119,12 @@ class StockData:
 
             sixHoursSpan = self.data.iloc[idx-36: idx+37]
             sixHoursSpan.index = sixHoursSpan.index.format(formatter=lambda x: x.strftime('%H:%M'))
-            # fig, ax = plt.subplots()
-            # ax = sixHoursSpan.index
-            plt.close('all')
-            # sixHoursSpan = sixHoursSpan.cumsum()
-            sixHoursSpan.plot(y="Open")
-            # fig.savefig('plot.png')
 
-            # print(sixHoursSpan.plot())
+            sixHoursSpan["Open"].plot(legend=True, grid=True)
+            sixHoursSpan["Volume"].plot(secondary_y=True, legend=True, grid=True)
 
             print(idx)
             print(openingValue)
-            # print(oneHourLater)
             print(firstHour)
             print("")
             print(firstHourHighestPeak)
