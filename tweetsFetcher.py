@@ -2,6 +2,7 @@ import csv
 import os
 import html
 import re
+import datetime
 
 import tweepy
 import requests
@@ -65,10 +66,17 @@ class TweetsFetcher:
 
         return allTweets
 
-    def _isTweetWorthSaving(self, tweetStaus):
-        mentionedUsers = [(x['screen_name']).lower() for x in tweetStaus.entities['user_mentions']]
-        if ((self.companyOfInterest).lower() in mentionedUsers) or \
-           (re.search(rf"\b{self.companyOfInterest}\b", tweetStaus.full_text, re.IGNORECASE)):
+    def _isTweetWorthSaving(self, tweetStatus):
+        mentionedUsers = [(x['screen_name']).lower() for x in tweetStatus.entities['user_mentions']]
+
+        # only tweets which are at least 24 hours old will have reliable reaction count
+        # and we will have full stock data from integrations for them
+        datetimeLimit = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=24)
+        tweetCreatedAtTimezoneAware = tweetStatus.created_at.replace(tzinfo=datetime.timezone.utc)
+
+        if (((self.companyOfInterest).lower() in mentionedUsers) or
+           (re.search(rf"\b{self.companyOfInterest}\b", tweetStatus.full_text, re.IGNORECASE))) and \
+           tweetCreatedAtTimezoneAware < datetimeLimit:
             return True
         else:
             return False
