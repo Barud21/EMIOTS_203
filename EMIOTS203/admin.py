@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import TweetAndStockChart
+from .models import Tweet, StockChart
 
 # Register your models here.
-admin.site.register(TweetAndStockChart)
+admin.site.register(Tweet)
+admin.site.register(StockChart)
