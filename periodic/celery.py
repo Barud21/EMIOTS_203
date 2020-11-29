@@ -14,7 +14,7 @@ app.conf.beat_schedule = {
     'schedule': crontab(minute='*/10')
     },
  'realTask': {
-    'task': 'periodic.tasks.createOrUpdateTweetsDataFile',
-    'schedule': crontab(hour=21, minute=30)
+    'task': 'periodic.tasks.createOrUpdateTweetsDb',
+    'schedule': crontab(hour=22, minute=0)
     }
 }

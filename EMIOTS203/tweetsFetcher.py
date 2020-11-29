@@ -1,14 +1,12 @@
-# DEPRACTED!!!!
-# Will be removed when data migration from .csv to database is done
-
 import csv
 import os
-import html
 import re
 import datetime
 
 import tweepy
 import requests
+
+from .models import Tweet
 
 from project.settings import (TWEETSFETCHER_CUSTOMERKEY,
                               TWEETSFETCHER_CUSTOMERSECRET,
@@ -26,11 +24,8 @@ class TweetsFetcher:
         self.userId = username
         self.companyOfInterest = companyOfInterest
 
-        self.dataFileName = self.userId + '_Tweets.csv'
-        self.dataDirName = 'data'
-        self.dataFileLocation = os.path.join(self.dataDirName, self.dataFileName)
-        if not os.path.isdir(self.dataDirName):
-            os.mkdir(self.dataDirName)
+        # 60, as for this period we can get detailed stock data
+        self.maxDaysAgoToFetchTweets = 60
 
         self.api = self._authorizeMe()
 
@@ -40,6 +35,26 @@ class TweetsFetcher:
         api = tweepy.API(auth)
         return api
 
+    # give it list of tweetStatus objects from API and a datetime
+    # it will return these tweets which are younger than a given datetime
+    def _filterTweetsYoungerThanDateTimeLimit(self, tweetsList, datetimeLimit):
+        filteredTweets = []
+
+        if len(tweetsList) > 0:
+            oldestTweetDatetimeTzAware = tweetsList[-1].created_at.replace(tzinfo=datetime.timezone.utc)
+
+            if oldestTweetDatetimeTzAware < datetimeLimit:
+                for tweetStatus in tweetsList:
+                    tweetDateTimeTzAware = tweetStatus.created_at.replace(tzinfo=datetime.timezone.utc)
+                    if tweetDateTimeTzAware > datetimeLimit:
+                        filteredTweets.append(tweetStatus)
+                    else:
+                        continue
+            else:
+                filteredTweets.extend(tweetsList)
+
+        return filteredTweets
+
     def _getAllTweetsThatArePossibleToFetch(self):
         allTweets = []
         TweetsPerRequestMax = 200  # max allowed
@@ -47,23 +62,35 @@ class TweetsFetcher:
                                              tweet_mode='extended',
                                              count=TweetsPerRequestMax
                                              )
-        if len(tweetsBatch) > 0:
-            allTweets.extend(tweetsBatch)
-            oldestId = tweetsBatch[-1].id
 
-            while True:
-                tweetsBatch = self.api.user_timeline(screen_name=self.userId,
-                                                     tweet_mode='extended',
-                                                     count=TweetsPerRequestMax,
-                                                     max_id=oldestId - 1
-                                                     )
-                if len(tweetsBatch) > 0:
-                    allTweets.extend(tweetsBatch)
-                    oldestId = tweetsBatch[-1].id
-                    print(f"Still fetching tweets, got {len(allTweets)} tweets so far from Twitter API.")
-                    print('The oldest tweet has the following date ', tweetsBatch[-1].created_at)
-                else:
-                    break
+        datetimeLimit = datetime.datetime.now(datetime.timezone.utc) - \
+            datetime.timedelta(days=self.maxDaysAgoToFetchTweets)
+
+        if len(tweetsBatch) > 0:
+            print('The oldest tweet fetched from API (no filter) has the following date ', tweetsBatch[-1].created_at)
+
+            filteredTweets = self._filterTweetsYoungerThanDateTimeLimit(tweetsList=tweetsBatch,
+                                                                        datetimeLimit=datetimeLimit)
+            allTweets.extend(filteredTweets)
+            oldestTweetDateTime = filteredTweets[-1].created_at.replace(tzinfo=datetime.timezone.utc)
+
+            if oldestTweetDateTime > datetimeLimit:
+                while True:
+                    oldestId = filteredTweets[-1].id
+                    tweetsBatch = self.api.user_timeline(screen_name=self.userId,
+                                                         tweet_mode='extended',
+                                                         count=TweetsPerRequestMax,
+                                                         max_id=oldestId - 1
+                                                         )
+                    filteredTweets = self._filterTweetsYoungerThanDateTimeLimit(tweetsList=tweetsBatch,
+                                                                                datetimeLimit=datetimeLimit)
+                    if len(filteredTweets) > 0:
+                        allTweets.extend(filteredTweets)
+                        print(f"Still fetching tweets, got {len(allTweets)} tweets so far from Twitter API.")
+                        print('The oldest fetched tweet (no filter) date: ', tweetsBatch[-1].created_at)
+                        print('The oldest (filtered) tweet date: ', filteredTweets[-1].created_at)
+                    else:
+                        break
         else:
             print('There was no tweets to fetch.')
 
@@ -84,74 +111,47 @@ class TweetsFetcher:
         else:
             return False
 
-    def _writeToFileOnlyNeededTweets(self, listOfTweets, writeHeaders=False):
+    def _writeToFileOnlyNeededTweets(self, listOfTweets):
+        print('Saving tweets in database')
         listOfNewTweetsBasicData = []
 
-        with open(self.dataFileLocation, 'a', newline='', encoding='utf-8') as dataFile:
-            writer = csv.writer(dataFile)
-            if writeHeaders:
-                headers = ['Id',
-                           'Date',
-                           'Text',
-                           'Retweets',
-                           'Favorites',
-                           'Hashtags',
-                           'IsReply',
-                           'MentionedUsers',
-                           'HtmlElement']
-                writer.writerow(headers)
+        # we expect that listofTweets has the newest tweets in the begining of the list
+        for tweet in reversed(listOfTweets):
+            # If tweet contains needed data then save it to file
+            if self._isTweetWorthSaving(tweet):
+                htmlElem = self.getHtmlForTweet(tweet.id)
+                Tweet.objects.create(externalId=tweet.id,
+                                     date=tweet.created_at.replace(tzinfo=datetime.timezone.utc),
+                                     text=tweet.full_text,
+                                     retweets=tweet.retweet_count,
+                                     favorites=tweet.favorite_count,
+                                     tweetHtml=htmlElem
+                                     )
 
-            # we expect that listofTweets has the newest tweets in the begining of the list
-            for tweet in reversed(listOfTweets):
-                # If tweet contains needed data then save it to file
-                if self._isTweetWorthSaving(tweet):
-                    isReply = 0
-                    if tweet.in_reply_to_user_id is not None:
-                        isReply = 1
-                    mentionedUsers = [x['screen_name'] for x in tweet.entities['user_mentions']]
-                    hashtags = [x['text'] for x in tweet.entities['hashtags']]
-                    htmlElem = self.getHtmlForTweet(tweet.id)
-                    cleanedFullText = html.unescape(tweet.full_text.encode('utf-8').decode('utf-8)'))
-                    cleanedFullText = cleanedFullText.replace('\n', '\\n')
-                    # is it safe to have html unescaped here?
-                    # TODO: Is escaping \n with \\n in full_text acceptable? Looks hacky
-                    writer.writerow([tweet.id,
-                                    tweet.created_at,
-                                    cleanedFullText,
-                                    tweet.retweet_count,
-                                    tweet.favorite_count,
-                                    hashtags,
-                                    isReply,
-                                    mentionedUsers,
-                                    htmlElem])
+                newTweetBasicData = {
+                    'publish_date': tweet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'tweet_html': htmlElem
+                }
 
-                    newTweetBasicData = {
-                        'publish_date': tweet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                        'tweet_html': htmlElem
-                    }
-
-                    listOfNewTweetsBasicData.append(newTweetBasicData)
+                listOfNewTweetsBasicData.append(newTweetBasicData)
 
         print(f"Saved {len(listOfNewTweetsBasicData)} tweets that matched criteria.")
         return listOfNewTweetsBasicData
 
-    def createDataFile(self):
+    def populateDbFromScratch(self):
         # Fetch tweets from TweeterApi
         allTweets = self._getAllTweetsThatArePossibleToFetch()
 
-        listOfNewTweetsBasicData = self._writeToFileOnlyNeededTweets(allTweets, writeHeaders=True)
+        listOfNewTweetsBasicData = self._writeToFileOnlyNeededTweets(allTweets)
 
         return listOfNewTweetsBasicData
 
-    def updateDataFileToThisMoment(self):
+    def updateDbToThisMoment(self):
         listOfNewTweetsBasicData = []
-        # 1. Grab the last tweet Id that is present in the file
-        # If it is too slow, rewrite this part so we dont need to load entire file in memory
-        with open(self.dataFileLocation, 'r', encoding='utf-8') as dataFile:
-            lines = dataFile.readlines()
-        lastLine = lines[-1]
-        biggestIdInFile = int((lastLine.split(','))[0])
-        # 2. Check if there are any newer tweets than the last tweet in file
+        # 1. Grab the last tweet Id that is present in the database
+        # objects.first() because we are sorting Tweets, to have the newest one on the top
+        biggestIdInFile = Tweet.objects.first().externalId
+        # 2. Check if there are any newer tweets in API than the last tweet in the db
         allTweets = []
 
         tweetsBatch = self.api.user_timeline(screen_name=self.userId,
@@ -179,8 +179,7 @@ class TweetsFetcher:
                 else:
                     break
 
-            # 3. Save results to file
-            # Write a function to save only needed tweets to file. SaveHeaders=false as a param
+            # 3. Save results to db
             print(f"Fetched {len(allTweets)} tweets in total from Twitter API.")
             listOfNewTweetsBasicData = self._writeToFileOnlyNeededTweets(allTweets)
         else:
@@ -227,20 +226,17 @@ class TweetsFetcher:
         os.remove(self.dataFileLocation)
         os.rename(tempDataFileLocation, self.dataFileLocation)
 
-    def createOrUpdateDataFile(self):
+    def createOrUpdateDb(self):
         listOfNewTweetsBasicData = []
 
-        if os.path.isfile(self.dataFileLocation):
-            listOfNewTweetsBasicData = self.updateDataFileToThisMoment()
+        if Tweet.objects.exists():
+            listOfNewTweetsBasicData = self.updateDbToThisMoment()
         else:
-            listOfNewTweetsBasicData = self.createDataFile()
+            listOfNewTweetsBasicData = self.populateDbFromScratch()
 
         return listOfNewTweetsBasicData
 
 
-# DEPRACTED!!!!
 if __name__ == '__main__':
     fetcher = TweetsFetcher(username='elonmusk', companyOfInterest='Tesla')
-    listOfNewTweetsBasicData = fetcher.createOrUpdateDataFile()
-
-# Note: To render HTML Elem correctly, replace "" with "
+    listOfNewTweetsBasicData = fetcher.createOrUpdateDb()
