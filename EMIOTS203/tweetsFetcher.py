@@ -113,7 +113,7 @@ class TweetsFetcher:
 
     def _writeToFileOnlyNeededTweets(self, listOfTweets):
         print('Saving tweets in database')
-        listOfNewTweetsBasicData = []
+        howManySavedTweets = 0
 
         # we expect that listofTweets has the newest tweets in the begining of the list
         for tweet in reversed(listOfTweets):
@@ -127,27 +127,17 @@ class TweetsFetcher:
                                      favorites=tweet.favorite_count,
                                      tweetHtml=htmlElem
                                      )
+                howManySavedTweets += 1
 
-                newTweetBasicData = {
-                    'publish_date': tweet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    'tweet_html': htmlElem
-                }
-
-                listOfNewTweetsBasicData.append(newTweetBasicData)
-
-        print(f"Saved {len(listOfNewTweetsBasicData)} tweets that matched criteria.")
-        return listOfNewTweetsBasicData
+        print(f"Saved {howManySavedTweets} tweets that matched criteria.")
 
     def populateDbFromScratch(self):
         # Fetch tweets from TweeterApi
         allTweets = self._getAllTweetsThatArePossibleToFetch()
 
-        listOfNewTweetsBasicData = self._writeToFileOnlyNeededTweets(allTweets)
-
-        return listOfNewTweetsBasicData
+        self._writeToFileOnlyNeededTweets(allTweets)
 
     def updateDbToThisMoment(self):
-        listOfNewTweetsBasicData = []
         # 1. Grab the last tweet Id that is present in the database
         # objects.first() because we are sorting Tweets, to have the newest one on the top
         biggestIdInFile = Tweet.objects.first().externalId
@@ -181,11 +171,9 @@ class TweetsFetcher:
 
             # 3. Save results to db
             print(f"Fetched {len(allTweets)} tweets in total from Twitter API.")
-            listOfNewTweetsBasicData = self._writeToFileOnlyNeededTweets(allTweets)
+            self._writeToFileOnlyNeededTweets(allTweets)
         else:
             print('There was no tweets to fetch.')
-
-        return listOfNewTweetsBasicData
 
     def getHtmlForTweet(self, TweetId):
         url = 'https://api.twitter.com/1.1/statuses/oembed.json'    # needs no auth
@@ -227,16 +215,12 @@ class TweetsFetcher:
         os.rename(tempDataFileLocation, self.dataFileLocation)
 
     def createOrUpdateDb(self):
-        listOfNewTweetsBasicData = []
-
         if Tweet.objects.exists():
-            listOfNewTweetsBasicData = self.updateDbToThisMoment()
+            self.updateDbToThisMoment()
         else:
-            listOfNewTweetsBasicData = self.populateDbFromScratch()
-
-        return listOfNewTweetsBasicData
+            self.populateDbFromScratch()
 
 
 if __name__ == '__main__':
     fetcher = TweetsFetcher(username='elonmusk', companyOfInterest='Tesla')
-    listOfNewTweetsBasicData = fetcher.createOrUpdateDb()
+    fetcher.createOrUpdateDb()
