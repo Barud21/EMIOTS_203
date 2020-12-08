@@ -220,6 +220,30 @@ class TweetsFetcher:
         else:
             self.populateDbFromScratch()
 
+    # to populate database with tweet examples data from .csv file
+    def migrateDataFromCsvToDatabase(self):
+        thisFilePath = os.path.dirname(__file__)
+        dataFileName = 'elonmusk_Tweets.csv'
+        dataFileLocation = os.path.abspath(os.path.join(thisFilePath, "..", "data", dataFileName))
+        if not Tweet.objects.exists():
+            with open(dataFileLocation, 'r', encoding='utf-8') as dataFile:
+                reader = csv.DictReader(dataFile)
+                counter = 0
+                for row in reader:
+                    formattedDate = datetime.datetime.strptime(row["Date"], '%Y-%m-%d %H:%M:%S')
+                    formattedDate = formattedDate.replace(tzinfo=datetime.timezone.utc)
+                    Tweet.objects.create(externalId=row["Id"],
+                                         date=formattedDate,
+                                         text=row["Text"],
+                                         retweets=row["Retweets"],
+                                         favorites=row["Favorites"],
+                                         tweetHtml=row["HtmlElement"]
+                                         )
+                    counter += 1
+                print(f"Migrated {counter} tweets from CSV to database")
+        else:
+            print('There is already data in the database, not migrating from csv')
+
 
 if __name__ == '__main__':
     fetcher = TweetsFetcher(username='elonmusk', companyOfInterest='Tesla')
