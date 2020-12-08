@@ -12,5 +12,4 @@ def check():
 def createOrUpdateTweetsDb():
     fetcher = TweetsFetcher(username='elonmusk', companyOfInterest='Tesla')
 
-    # rerurns list of dicts with basic info about new important tweets - published date and html element
     fetcher.createOrUpdateDb()
