@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Tweets List</h1>
+
+
+<table>
+    {% for tweet in tweet_list%}
+        <tr>
+            <th>{{tweet.tweetHtml | safe}}</th>
+            <th>{{tweet.stockchart.chartHtml | safe}}</th>
+        </tr>
+    {% endfor %}
+</table>
+
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+</body>
+</html>
+
