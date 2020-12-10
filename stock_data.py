@@ -123,7 +123,8 @@ class StockData:
             threeHoursAfter = self.data.iloc[idx+1: idx+37]
             threeHoursAfter.index = threeHoursAfter.index.format(formatter=lambda x: x.strftime('%H:%M'))
 
-            tweetTimeIdx = datetime.datetime.strptime(self.tweets.iloc[x, 0], '%Y-%m-%d %H:%M:%S')  #TODO: create tmp for this and 2nd line of for
+            # TODO: create tmp for this and 2nd line of for
+            tweetTimeIdx = datetime.datetime.strptime(self.tweets.iloc[x, 0], '%Y-%m-%d %H:%M:%S')
             tweetTimeIdx = tweetTimeIdx.strftime('%m-%d %H:%M')
             tweetTime = pd.DataFrame(data=None, columns=threeHoursBefore.columns, index=[tweetTimeIdx])
 
