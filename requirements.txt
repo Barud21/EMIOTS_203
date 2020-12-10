@@ -9,7 +9,7 @@ asgiref==3.2.10           # via django
 beautifulsoup4==4.9.3     # via yahoofinancials
 billiard==3.6.3.0         # via celery
 celery==5.0.1             # via django-celery-beat
-certifi==2020.6.20        # via requests
+certifi==2020.6.20        # via matplotlib, requests
 chardet==3.0.4            # via requests
 click-didyoumean==0.0.3   # via celery
 click-repl==0.1.6         # via celery
@@ -24,11 +24,14 @@ django==3.1.2             # via -r requirements.in, django-celery-beat, django-h
 flake8==3.8.4             # via -r requirements.in
 gunicorn==20.0.4          # via -r requirements.in
 idna==2.10                # via requests
+jinja2==2.11.2            # via mpld3
 kiwisolver==1.3.1         # via matplotlib
 kombu==5.0.2              # via celery
 lxml==4.6.1               # via yfinance
-matplotlib==3.3.3         # via -r requirements.in
+markupsafe==1.1.1         # via jinja2
+matplotlib==3.3.2         # via -r requirements.in, mpld3
 mccabe==0.6.1             # via flake8
+mpld3==0.5.1              # via -r requirements.in
 multitasking==0.0.9       # via yfinance
 numpy==1.19.2             # via matplotlib, pandas, yfinance
 oauthlib==3.1.0           # via requests-oauthlib
