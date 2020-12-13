@@ -1,5 +1,7 @@
 import datetime
 from os import path
+import base64
+from io import BytesIO
 
 import pandas as pd
 import yfinance as yf
@@ -91,6 +93,14 @@ class StockData:
             concatData = pd.concat([historicData, last60Days])
             concatData.to_csv('data/stock_data.csv')
 
+    def _getB64HtmlFromChart(self, figure):
+        buf = BytesIO()
+        figure.savefig(buf, format="png")
+        data = base64.b64encode(buf.getbuffer()).decode("ascii")
+        htmlContent = f"<img src='data:image/png;base64,{data}'/>"
+
+        return htmlContent
+
     def extractingTweetsDates(self):
         self.tweets = pd.read_csv('data/elonmusk_Tweets.csv', index_col=0)
         # print(self.tweets)
@@ -137,6 +147,8 @@ class StockData:
             maxIn6Hours = sixHoursSpan["Open"].max()
 
             # --------first option--------
+            # according to FAQ -> "How to use Matplotlib in a web application server",
+            # we should avoid pyplot https://matplotlib.org/3.3.3/faq/howto_faq.html
             fig = plt.figure(figsize=(16, 9))
             ax = fig.add_subplot(111)
             ax.set_title("EMIOTS")
