@@ -1,21 +1,20 @@
 import base64
 from io import BytesIO
 import datetime
+import os
 
 import pandas as pd
 import yfinance as yf
 from matplotlib.figure import Figure
-import mpld3
 
-# setting up django for script testing
-import os
-import sys
-import django
-thisFilePath = os.path.dirname(__file__)
-rootLocation = os.path.abspath(os.path.join(thisFilePath, ".."))
-sys.path.append(rootLocation)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
-django.setup()
+# setting up django for script testing, uncomment lines below to sun tests
+# import sys
+# import django
+# thisFilePath = os.path.dirname(__file__)
+# rootLocation = os.path.abspath(os.path.join(thisFilePath, ".."))
+# sys.path.append(rootLocation)
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
+# django.setup()
 
 from EMIOTS203.models import Tweet, StockChart
 
@@ -27,6 +26,7 @@ class StockData:
         self.stockData = pd.DataFrame()
         self.tweetsDates = pd.DataFrame()
 
+    # Converting figure in .png format to base64
     def _getB64HtmlFromChart(self, figure):
         buf = BytesIO()
         figure.savefig(buf, format="png")
@@ -97,6 +97,7 @@ class StockData:
 
         return sixHoursSpan, tweetExactTime, minIn6Hours, maxIn6Hours, maxSwing, openingDate, closingDate
 
+    # Correlating stock data with tweets
     def comparingTweetsWithStock(self):
         allTweets = Tweet.objects.all()
         tweetsWithoutStockchart = allTweets.filter(stockchart__isnull=True)
@@ -110,8 +111,9 @@ class StockData:
                                      progress=False)
 
         self.stockData.index = pd.to_datetime(self.stockData.index, format='%Y-%m-%d %H:%M:%S', utc='US/Eastern')
-
         self.tweets = pd.DataFrame(list(tweetsWithoutStockchart.values('date', 'externalId')))
+
+        chartCounter = 0
 
         for x in range(self.tweets.shape[0]):
             idx = self.stockData.index.get_loc(key=self.tweets.iloc[x, 0], method='pad')
@@ -126,24 +128,18 @@ class StockData:
             openingDate = tweetAnalysis[5]
             closingDate = tweetAnalysis[6]
 
-            fig = self._plottingTheFigure(sixHoursSpan.index, sixHoursSpan["Open"], tweetExactTime, minIn6Hours, 
+            fig = self._plottingTheFigure(sixHoursSpan.index, sixHoursSpan["Open"], tweetExactTime, minIn6Hours,
                                           maxIn6Hours, sixHoursSpan["Volume"], openingDate, closingDate)
 
             chartHtml = self._getB64HtmlFromChart(fig)
 
-            fig.savefig('my_plot.png')
-            print("tweetId " + str(Tweet.objects.get(externalId=tweetId).externalId))
-
             StockChart.objects.create(chartHtml=chartHtml,
                                       maxSwing=maxSwing,
                                       tweetId=Tweet.objects.get(pk=tweetId))
+            chartCounter += 1
+        print(f"{chartCounter} stockcharts were added to database")
 
-            print(50*'-')
-
-        print(startDate)
-        print(self.tweets)
-        print(self.stockData)
-
+    # Adding stockcharts based on csv file
     def migrateStockFromCsvToDatabase(self):
         thisFilePath = os.path.dirname(__file__)
         stockFileName = 'stock_data.csv'
@@ -156,6 +152,8 @@ class StockData:
         self.stockData = pd.read_csv(stockFileName, index_col=0)
         self.stockData.index = pd.to_datetime(self.stockData.index, format='%Y-%m-%d %H:%M:%S', utc='US/Eastern')
 
+        chartCounter = 0
+
         for x in range(self.tweets.shape[0]):
             idx = self.stockData.index.get_loc(key=self.tweets.iloc[x, 0], method='pad')
             tweetId = self.tweets.iloc[x, 1]
@@ -169,17 +167,17 @@ class StockData:
             openingDate = tweetAnalysis[5]
             closingDate = tweetAnalysis[6]
 
-            fig = self._plottingTheFigure(sixHoursSpan.index, sixHoursSpan["Open"], tweetExactTime, minIn6Hours, 
+            fig = self._plottingTheFigure(sixHoursSpan.index, sixHoursSpan["Open"], tweetExactTime, minIn6Hours,
                                           maxIn6Hours, sixHoursSpan["Volume"], openingDate, closingDate)
 
             chartHtml = self._getB64HtmlFromChart(fig)
 
-            fig.savefig('my_plot.png')
-            print("tweetId " + str(Tweet.objects.get(externalId=tweetId).externalId))
-
             StockChart.objects.create(chartHtml=chartHtml,
                                       maxSwing=maxSwing,
                                       tweetId=Tweet.objects.get(pk=tweetId))
+            chartCounter += 1
+
+        print(f"{chartCounter} stockcharts were added to database")
 
 
 if __name__ == '__main__':
