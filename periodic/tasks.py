@@ -1,7 +1,7 @@
 from periodic.celery import app
 
 from EMIOTS203.tweetsFetcher import TweetsFetcher
-from EMIOTS203.stockData import StockChart
+from EMIOTS203.stockData import StockData
 
 
 @app.task
@@ -15,5 +15,5 @@ def createOrUpdateDb():
 
     fetcher.createOrUpdateDb()
 
-    stockchart = StockChart()
+    stockchart = StockData()
     stockchart.comparingTweetsWithStock()
