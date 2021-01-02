@@ -77,7 +77,7 @@ class StockData:
         threeHoursBefore.index = threeHoursBefore.index.format(formatter=lambda x: x.strftime('%H:%M'))
 
         threeHoursAfter = stockData.iloc[idx+1: idx+37]
-        closingDate = threeHoursAfter.index[0].strftime('%Y-%m-%d')
+        closingDate = threeHoursAfter.index[-1].strftime('%Y-%m-%d')
         threeHoursAfter.index = threeHoursAfter.index.format(formatter=lambda x: x.strftime('%H:%M'))
 
         tweetTimeIdx = tweets.iloc[x, 0].strftime('%m-%d %H:%M')
@@ -180,6 +180,7 @@ class StockData:
         print(f"{chartCounter} stockcharts were added to database")
 
 
+# TODO: zakomentowanie maina i nagłówka, żeby sobie testować
 if __name__ == '__main__':
     stock = StockData()
     stock.comparingTweetsWithStock()
