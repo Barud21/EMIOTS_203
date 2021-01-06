@@ -11,30 +11,16 @@ Example data is present in the `data` directory. It consists of 2 files:
 
 ### How to migrate
 
-1. Migrate tweets
+1. Migrate tweets and stock charts
 
     - Run `python .\manage.py shell`
     - In the shell, execute the following
 
         ```python
-        from EMIOTS203.tweetsFetcher import TweetsFetcher
-        fetcher = TweetsFetcher(username='elonmusk', companyOfInterest='Tesla')
-        fetcher.migrateDataFromCsvToDatabase()
+        exec(open('dataMigration.py').read())
         ```
 
-    This process assumes that you have an empty Tweet table. The `migrateDataFromCsvToDatabase()` method will print how many tweets were imported to database or info that Tweet table consists some date and migration did not take place.
-
-2. Migrate stock data  
-    - Run `python .\manage.py shell`
-    - In the shell, execute the following
-
-        ```python
-        from EMIOTS203.stockData import StockData
-        stockData = StockData()
-        stockData.migrateStockFromCsvToDatabase()
-        ```
-
-    This process assumes that you have an empty StockChart table. The `migrateStockFromCsvToDatabase()` method will print how many tweets were added to database or info that Stockchart table consists some data and migration did not take place.
+    This process assumes that you have an empty Tweet and StockChart tables. This command migrates tweets and stockcharts to tables, it will print how many tweets were imported to database or info that Tweet or StockChart table consists some data and migration did not take place.
 
 ## Waking up free heroku dynos
 
