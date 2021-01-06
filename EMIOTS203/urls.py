@@ -1,9 +1,10 @@
 from django.urls import path
 
 from .views import (
-    TweetListView
+    tweetsChartsView
 )
 
 urlpatterns = [
-    path('tweets/',  TweetListView.as_view(), name='tweet-list')
+    path('tweets/',  tweetsChartsView)
+
 ]
