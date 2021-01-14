@@ -8,20 +8,27 @@
     <!-- Bootstrap CSS CDN -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
           integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+    <style>body {font-family: Arial, sans-serif;}</style>
+    <!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
+
+    <!-- jQuery CDN hosted by Google -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+     <!-- Fengyuan Chen's Datepicker -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datepicker/0.6.5/datepicker.min.css" integrity="sha256-b88RdwbRJEzRx95nCuuva+hO5ExvXXnpX+78h8DjyOE=" crossorigin="anonymous" />
+
+    
     <title>EMIOTS203</title>
 </head>
 
 <body>
 
-
-
-<!-- jQuery CDN hosted by Google -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
-<!--Waypoints from cloudflare cdn-->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/shortcuts/infinite.min.js"></script>
-
+    <form action="" class="searchForm" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Send</button>
+    </form>
 
 <div class="infinite-container">
     {% for tweet in page_obj %}
@@ -35,6 +42,7 @@
                         <tr>
                             <th>{{tweet.tweetHtml | safe}}</th>
                             <th>{{tweet.stockchart.chartHtml | safe}}</th>
+                            <th>{{tweet.stockchart.maxSwing}}</th>
                         </tr>
                     </table>
 
@@ -48,18 +56,27 @@
     <a class="infinite-more-link" href="?page={{ page_obj.next_page_number }}">More</a>
   {% endif %}
 
-  <script>
-    var infinite = new Waypoint.Infinite({
-      element: $('.infinite-container')[0],
-      onAfterPageLoad: function () 
-        {
-            $.getScript("https://platform.twitter.com/widgets.js")
-        }
-    });
-  </script>
+  
+ <!-- Fengyuan Chen's Datepicker -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datepicker/0.6.5/datepicker.min.js" integrity="sha256-/7FLTdzP6CfC1VBAj/rsp3Rinuuu9leMRGd354hvk0k=" crossorigin="anonymous"></script>
 
+<!--Waypoints from cloudflare cdn-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/shortcuts/infinite.min.js"></script>
 
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
+<script>
+  var infinite = new Waypoint.Infinite({
+    element: $('.infinite-container')[0],
+    onAfterPageLoad: function () 
+      {
+          $.getScript("https://platform.twitter.com/widgets.js")
+      }
+  });
+</script>
+
 
 </body>
 </html>
