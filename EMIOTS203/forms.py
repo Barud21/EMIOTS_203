@@ -11,6 +11,6 @@ class SwingChoiceField(forms.Form):
     swingValues = forms.ChoiceField(choices=[(x, x) for x in range(1, int(maxValue)+1)])
 
     date = forms.DateTimeField(
-        input_formats=['%d/%m/%Y %H:%M'], 
+        input_formats=['%d/%m/%Y %H:%M'],
         widget=FengyuanChenDatePickerInput()
     )
