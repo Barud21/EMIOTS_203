@@ -24,10 +24,10 @@
 
 <body>
 
-    <form action="" class="searchForm" method="post">
+    <form action="" class="searchForm" method="post" autocomplete="off">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Send</button>
+        <button type="submit">Filter results</button>
     </form>
 
 <div class="infinite-container">
