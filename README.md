@@ -1,5 +1,26 @@
 # EMIOTS203
 
+It is a web application (using Django) that allows you to check if tweets posted by elonmusk account and containing a reference to Tesla had any influence on TSLA results on NYSE.
+
+The name is an acronym for Elon Musk Influence On Tesla Stock. 203 part doesn't have any meaning :)
+
+## How it works?
+
+It consists of 3 main parts:
+
+- TweetsFetcher - is a script that uses `tweepy` library to get tweets from Twitter Api
+- StockData - is a script that uses `yfinance` library to fetch stock market data and generates graphs representing this data
+- Django application - allows to visualize both tweets and stock graphs
+
+To periodically poll for the new data we are using `celery` library along with `django-celery-beat` for a cool management panel in django-admin.
+
+Data polling task is configured to run once a day. The following acions are executed during this task:
+
+- get tweets from Twitter API that are newer than last saved tweet
+- check if any of these tweets is relevant (by mentioning Tesla account or just having a word Tesla inside), if yes then save it to database
+- get stock data for 3 hours before and after tweet's date
+- generate a graph with fetched stock data and save it into database
+
 ## Example data
 
 To make your life easier when testing this project, we provided example data sets that you can import to your database. This way, you can get the feel of this project by yourself while waiting for approval of your Twitter developper account.
