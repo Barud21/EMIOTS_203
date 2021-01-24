@@ -10,9 +10,9 @@ class FilteringForm(forms.Form):
     maxOfMaxSwing = StockChart.objects.aggregate(Max('maxSwing'))['maxSwing__max']
     swingChoicesList = [(x, x) for x in range(1, int(maxOfMaxSwing)+1)]
     swingChoicesList.insert(0, ('', '----'))
-    swingValues = forms.ChoiceField(choices=swingChoicesList,
-                                    label='Stock change greater than X percent:',
-                                    required=False)
+    swingValue = forms.ChoiceField(choices=swingChoicesList,
+                                   label='Stock change greater than X percent:',
+                                   required=False)
 
     startDate = forms.DateTimeField(
         input_formats=['%d/%m/%Y'],
