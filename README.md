@@ -38,7 +38,7 @@ Example data is present in the `data` directory. It consists of 2 files:
     - In the shell, execute the following
 
         ```python
-        exec(open('dataMigration.py').read())
+        exec(open('scripts/dataMigration.py').read())
         ```
 
     This process assumes that you have an empty Tweet and StockChart tables. This command migrates tweets and stockcharts to tables, it will print how many tweets were imported to database or info that Tweet or StockChart table consists some data and migration did not take place.
