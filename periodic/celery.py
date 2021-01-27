@@ -16,5 +16,9 @@ app.conf.beat_schedule = {
  'realTask': {
     'task': 'periodic.tasks.createOrUpdateDb',
     'schedule': crontab(hour=22, minute=0)
+    },
+ 'cleanupTask': {
+    'task': 'periodic.tasks.removeOldTweetsWithoutStockCharts',
+    'schedule': crontab(hour=23, minute=30, day_of_week='sun')
     }
 }
