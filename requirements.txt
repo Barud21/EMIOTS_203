@@ -6,7 +6,6 @@
 #
 amqp==5.0.1               # via kombu
 asgiref==3.2.10           # via django
-beautifulsoup4==4.9.3     # via yahoofinancials
 billiard==3.6.3.0         # via celery
 celery==5.0.1             # via django-celery-beat
 certifi==2020.6.20        # via matplotlib, requests
@@ -45,18 +44,16 @@ pyparsing==2.4.7          # via matplotlib
 pysocks==1.7.1            # via requests
 python-crontab==2.5.1     # via django-celery-beat
 python-dateutil==2.8.1    # via matplotlib, pandas, python-crontab
-pytz==2020.1              # via celery, django, django-timezone-field, pandas, yahoofinancials
+pytz==2020.1              # via celery, django, django-timezone-field, pandas
 requests-oauthlib==1.3.0  # via tweepy
 requests[socks]==2.24.0   # via requests-oauthlib, tweepy, yfinance
 six==1.15.0               # via click-repl, cycler, python-dateutil, tweepy
-soupsieve==2.0.1          # via beautifulsoup4
 sqlparse==0.4.1           # via django
 tweepy==3.9.0             # via -r requirements.in
 urllib3==1.25.11          # via requests
 vine==5.0.0               # via amqp, celery
 wcwidth==0.2.5            # via prompt-toolkit
 whitenoise==5.2.0         # via django-heroku
-yahoofinancials==1.6      # via -r requirements.in
 yfinance==0.1.55          # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
