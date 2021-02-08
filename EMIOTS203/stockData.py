@@ -121,7 +121,11 @@ class StockData:
             tweetTime["Open"][0] = ((threeHoursBefore["Open"][-1] + threeHoursAfter["Open"][0])/2)
             tweetTime["Volume"][0] = ((threeHoursBefore["Volume"][-1] + threeHoursAfter["Volume"][0])/2)
 
-        sixHoursSpan = pd.concat([threeHoursBefore, tweetTime, threeHoursAfter])
+        if tweetTimeIdx != threeHoursBefore.index[-1]:
+            sixHoursSpan = pd.concat([threeHoursBefore, tweetTime, threeHoursAfter])
+        else:
+            sixHoursSpan = pd.concat([threeHoursBefore, threeHoursAfter])
+        
         dateInDatetime = datetime.datetime.strptime(openingDate, '%Y-%m-%d').date()
 
         endOfDay = []
