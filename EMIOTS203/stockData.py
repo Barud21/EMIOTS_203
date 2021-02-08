@@ -7,8 +7,6 @@ import os
 import pandas as pd
 import yfinance as yf
 from matplotlib.figure import Figure
-# import matplotlib.ticker as ticker
-# import matplotlib.dates as dates
 
 # setting up django for script testing, uncomment lines below to sun tests
 # import sys
@@ -125,7 +123,7 @@ class StockData:
             sixHoursSpan = pd.concat([threeHoursBefore, tweetTime, threeHoursAfter])
         else:
             sixHoursSpan = pd.concat([threeHoursBefore, threeHoursAfter])
-        
+
         dateInDatetime = datetime.datetime.strptime(openingDate, '%Y-%m-%d').date()
 
         endOfDay = []
