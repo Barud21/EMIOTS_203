@@ -163,15 +163,15 @@ class StockData:
         allTweets = Tweet.objects.all()
         tweetsWithoutStockchart = allTweets.filter(stockchart__isnull=True)
 
-        startDate = tweetsWithoutStockchart.earliest('date').date + datetime.timedelta(-1)
-        betweenDays = (datetime.datetime.now() - startDate).days
+        startDate = (tweetsWithoutStockchart.earliest('date').date + datetime.timedelta(-1)).strftime('%Y-%m-%d')
+        endDate = datetime.date.today().strftime('%Y-%m-%d')
+        betweenDays = (datetime.datetime.strptime(endDate, '%Y-%m-%d').date() -
+                       datetime.datetime.strptime(startDate, '%Y-%m-%d').date()).days
 
         if betweenDays > 60:
-            startDate = (datetime.date.today()+datetime.timedelta(-59)).strftime('%Y-%m-%d')
+            startDate = (datetime.date.today() + datetime.timedelta(-59)).strftime('%Y-%m-%d')
         else:
             startDate = startDate.strftime('%Y-%m-%d')
-
-        endDate = datetime.date.today().strftime('%Y-%m-%d')
 
         self.stockData = yf.download(self.ticker,
                                      start=startDate,
