@@ -164,9 +164,9 @@ class StockData:
         tweetsWithoutStockchart = allTweets.filter(stockchart__isnull=True)
 
         startDate = tweetsWithoutStockchart.earliest('date').date + datetime.timedelta(-1)
-        betweenDays = datetime.date.today() - startDate
+        betweenDays = (datetime.datetime.now() - startDate).days
 
-        if betweenDays.days > 60:
+        if betweenDays > 60:
             startDate = (datetime.date.today()+datetime.timedelta(-59)).strftime('%Y-%m-%d')
         else:
             startDate = startDate.strftime('%Y-%m-%d')
