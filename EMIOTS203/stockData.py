@@ -162,7 +162,11 @@ class StockData:
     def comparingTweetsWithStock(self):
         allTweets = Tweet.objects.all()
         tweetsWithoutStockchart = allTweets.filter(stockchart__isnull=True)
-        startDate = (tweetsWithoutStockchart.earliest('date').date + datetime.timedelta(-1)).strftime('%Y-%m-%d')
+
+        startDate = tweetsWithoutStockchart.earliest('date').date + datetime.timedelta(-1)
+        if startDate > 60:
+            startDate = (datetime.date.today()+datetime.timedelta(-59)).strftime('%Y-%m-%d')
+
         endDate = datetime.date.today().strftime('%Y-%m-%d')
 
         self.stockData = yf.download(self.ticker,
